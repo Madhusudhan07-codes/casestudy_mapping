@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Profile Map Explorer</title>
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: #f9fafb;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background-color: #025f9d;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+  }
+  .container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+    padding: 1rem;
+    max-width: 1200px;
+    width: 100%;
+    margin: auto;
+  }
+  /* Responsive: Stack on mobile */
+  @media (max-width: 900px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Profile List */
+  .profile-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: 75vh;
+  }
+  .search-filter {
+    margin-bottom: 1rem;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 1.8px solid #ccc;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+  }
+  input[type="text"]:focus {
+    border-color: #025f9d;
+    outline: none;
+  }
+
+  /* Profile Card */
+  .profile-card {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    align-items: center;
+    transition: background-color 0.2s ease;
+  }
+  .profile-card:hover {
+    background-color: #f3f6f9;
+  }
+  .profile-photo {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #025f9d;
+  }
+  .profile-info {
+    flex: 1;
+  }
+  .profile-name {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 0;
+    color: #025f9d;
+  }
+  .profile-description {
+    font-size: 0.875rem;
+    color: #555;
+    margin-top: 0.25rem;
+  }
+  .profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  button.summary-button,
+  button.edit-button,
+  button.delete-button {
+    cursor: pointer;
+    padding: 0.3rem 0.6rem;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
+  }
+  button.summary-button {
+    background-color: #0384fc;
+  }
+  button.summary-button:hover {
+    background-color: #0264c7;
+  }
+  button.edit-button {
+    background-color: #fca103;
+  }
+  button.edit-button:hover {
+    background-color: #c77a02;
+  }
+  button.delete-button {
+    background-color: #ef4444;
+  }
+  button.delete-button:hover {
+    background-color: #b91c1c;
+  }
+
+  /* Profile Details */
+  .profile-details {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+    padding: 1rem;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  .profile-details h2 {
+    margin-top: 0;
+    color: #025f9d;
+  }
+  .profile-details img {
+    max-width: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #025f9d;
+  }
+  .profile-detail-text {
+    margin-top: 0.5rem;
+    line-height: 1.4;
+  }
+
+  /* Map Container */
+  .map-container {
+    height: 320px;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 1rem;
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.1);
+    background-color: #eee;
+  }
+
+  /* Admin Panel */
+  .admin-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  .admin-panel h3 {
+    margin-top: 0;
+    color: #025f9d;
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+  form.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  input[type="text"],
+  textarea {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 1.8px solid #ccc;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    width: 100%;
+    resize: vertical;
+  }
+  input[type="text"]:focus,
+  textarea:focus {
+    border-color: #025f9d;
+    outline: none;
+  }
+  textarea {
+    min-height: 80px;
+  }
+  .form-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+  button.submit-btn {
+    background-color: #16a34a;
+  }
+  button.submit-btn:hover {
+    background-color: #15803d;
+  }
+  button.cancel-btn {
+    background-color: #9ca3af;
+  }
+  button.cancel-btn:hover {
+    background-color: #6b7280;
+  }
+
+  /* Loading Spinner */
+  .loading-spinner {
+    margin: 2rem auto;
+    border: 6px solid #e2e8f0;
+    border-top: 6px solid #025f9d;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to {transform: rotate(360deg);}
+  }
+
+  .error-message {
+    color: #ef4444;
+    margin: 1rem 0;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<header>
+  Profile Map Explorer
+</header>
+<div id="root" class="container"></div>
+
+<!-- Load React dependencies -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.19.4/babel.min.js"></script>
+
+<!-- Load Google Maps JS API (Use your own API key for full functionality) -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
+<script type="text/babel">
+
+// Utility: promisified timeout for loading spinner simulation
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+// Sample initial profiles data
+const initialProfiles = [
+  {
+    id: "1",
+    name: "Alice Johnson",
+    photo: "https://randomuser.me/api/portraits/women/44.jpg",
+    description: "Graphic designer who loves traveling and nature.",
+    address: "1600 Amphitheatre Parkway, Mountain View, CA",
+    interests: "Travel, Photography, Hiking",
+    contact: "alice.johnson@email.com",
+  },
+  {
+    id: "2",
+    name: "Bob Smith",
+    photo: "https://randomuser.me/api/portraits/men/34.jpg",
+    description: "Software engineer passionate about open source.",
+    address: "1 Infinite Loop, Cupertino, CA",
+    interests: "Programming, Open Source, Gaming",
+    contact: "bob.smith@email.com",
+  },
+  {
+    id: "3",
+    name: "Catherine Wu",
+    photo: "https://randomuser.me/api/portraits/women/65.jpg",
+    description: "Marketing specialist with a knack for social media.",
+    address: "350 5th Ave, New York, NY 10118",
+    interests: "Social Media, Art, Travel",
+    contact: "catherine.wu@email.com",
+  }
+];
+
+// Utility to get profiles from localStorage or fallback
+const getStoredProfiles = () => {
+  try {
+    const stored = localStorage.getItem("profiles");
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return initialProfiles;
+};
+
+// Save profiles to localStorage
+const saveProfiles = (profiles) => {
+  localStorage.setItem("profiles", JSON.stringify(profiles));
+};
+
+// App Component
+function App() {
+  const [profiles, setProfiles] = React.useState(getStoredProfiles);
+  const [selectedProfile, setSelectedProfile] = React.useState(null); // for details view
+  const [mapProfile, setMapProfile] = React.useState(null); // for Map display
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [isAdminMode, setIsAdminMode] = React.useState(false);
+  const [editProfile, setEditProfile] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState(null);
+
+  // Save profiles to localStorage on change
+  React.useEffect(() => {
+    saveProfiles(profiles);
+  }, [profiles]);
+
+  const filteredProfiles = React.useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return profiles.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      p.address.toLowerCase().includes(term) ||
+      p.description.toLowerCase().includes(term)
+    );
+  }, [searchTerm, profiles]);
+
+  // Show Map with address after geocoding address to lat/lng
+  const handleShowSummary = async (profile) => {
+    setErrorMsg(null);
+    setLoading(true);
+    try {
+      const coords = await geocodeAddress(profile.address);
+      if (!coords) {
+        setErrorMsg("Address not found or invalid.");
+        setLoading(false);
+        return;
+      }
+      setMapProfile({...profile, lat: coords.lat, lng: coords.lng});
+      setSelectedProfile(profile);
+    } catch (error) {
+      setErrorMsg("Failed to load map.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Geocode address using Google Maps API
+  const geocodeAddress = (address) => {
+    return new Promise((resolve,reject) => {
+      if (!window.google || !window.google.maps) {
+        reject("Google Maps API not loaded");
+        return;
+      }
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ address }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          resolve(results[0].geometry.location.toJSON());
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  };
+
+  // Admin handlers
+  const handleAddProfile = () => {
+    setEditProfile({
+      id: null,
+      name: "",
+      photo: "",
+      description: "",
+      address: "",
+      interests: "",
+      contact: "",
+    });
+  };
+
+  const handleEditProfile = (profile) => {
+    setEditProfile(profile);
+  };
+
+  const handleDeleteProfile = (profile) => {
+    if(window.confirm(`Are you sure you want to delete profile "${profile.name}"?`)) {
+      setProfiles(profiles.filter(p => p.id !== profile.id));
+      if(selectedProfile?.id === profile.id) setSelectedProfile(null);
+      if(mapProfile?.id === profile.id) setMapProfile(null);
+    }
+  };
+
+  const handleSaveProfile = (profileData) => {
+    if(!profileData.name.trim() || !profileData.address.trim()) {
+      alert("Name and address are required.");
+      return;
+    }
+    let newProfiles;
+    if(profileData.id) {
+      newProfiles = profiles.map(p => p.id === profileData.id ? profileData : p);
+    }
+    else {
+      profileData.id = Date.now().toString();
+      // If no photo, assign a random placeholder
+      if(!profileData.photo) profileData.photo = "https://via.placeholder.com/64?text=User";
+      newProfiles = [...profiles, profileData];
+    }
+    setProfiles(newProfiles);
+    setEditProfile(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditProfile(null);
+  };
+
+  // UI structure:
+  // Left: Search filter + Profile list + Admin controls toggle + admin panel (when enabled)
+  // Right: Profile details + Map (map visible if mapProfile selected)
+  return (
+    <>
+      <div style={{display:'flex', justifyContent:'space-between', marginBottom:'8px'}}>
+        <div>
+          <button
+            onClick={() => setIsAdminMode(!isAdminMode)}
+            style={{
+              backgroundColor: isAdminMode ? '#ef4444' : '#16a34a',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              color: 'white',
+              cursor: 'pointer',
+            }}
+            aria-label="Toggle Admin Mode"
+          >
+            {isAdminMode ? "Exit Admin Mode" : "Enter Admin Mode"}
+          </button>
+          {isAdminMode && (
+            <button
+              onClick={handleAddProfile}
+              style={{
+                marginLeft: '1rem',
+                backgroundColor: '#2563eb',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+              aria-label="Add New Profile"
+            >
+              + Add Profile
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="container" style={{gridTemplateColumns: isAdminMode ? '1fr 2fr' : '1fr 2fr'}}>
+        <section>
+          <div className="profile-list" role="list" aria-label="Profile list">
+            <SearchFilter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            {filteredProfiles.length === 0 && (
+              <div>No profiles found for your search.</div>
+            )}
+            {filteredProfiles.map(profile => (
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                onSummary={() => handleShowSummary(profile)}
+                onSelect={() => setSelectedProfile(profile)}
+                adminMode={isAdminMode}
+                onEdit={() => handleEditProfile(profile)}
+                onDelete={() => handleDeleteProfile(profile)}
+              />
+            ))}
+          </div>
+          {isAdminMode && editProfile && (
+            <AdminPanel
+              profile={editProfile}
+              onSave={handleSaveProfile}
+              onCancel={handleCancelEdit}
+            />
+          )}
+        </section>
+        <section>
+          <div className="profile-details" aria-live="polite" aria-atomic="true">
+            {!selectedProfile && <div>Select a profile to view details.</div>}
+            {errorMsg && <div className="error-message">{errorMsg}</div>}
+            {loading && <LoadingSpinner />}
+            {!loading && selectedProfile && (
+              <>
+                <ProfileDetails profile={selectedProfile} />
+                {mapProfile && <MapView lat={mapProfile.lat} lng={mapProfile.lng} address={mapProfile.address} />}
+              </>
+            )}
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+// SearchFilter Component
+function SearchFilter({searchTerm, setSearchTerm}) {
+  return (
+    <div className="search-filter">
+      <input
+        type="text"
+        aria-label="Search profiles"
+        placeholder="Search profiles by name, address or description"
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+      />
+    </div>
+  );
+}
+
+// ProfileCard Component
+function ProfileCard({profile, onSummary, onSelect, adminMode = false, onEdit, onDelete}) {
+  return (
+    <div
+      className="profile-card"
+      role="listitem"
+      tabIndex="0"
+      aria-label={`Profile of ${profile.name}`}
+      onClick={(e) => {
+        // Ignore clicks on buttons
+        if (e.target.tagName !== 'BUTTON') onSelect();
+      }}
+      onKeyDown={(e) => {
+        if(e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      <img className="profile-photo" src={profile.photo} alt={`Photo of ${profile.name}`} />
+      <div className="profile-info">
+        <h3 className="profile-name">{profile.name}</h3>
+        <p className="profile-description">{profile.description}</p>
+      </div>
+      <div className="profile-actions">
+        <button className="summary-button" onClick={e => { e.stopPropagation(); onSummary(); }} aria-label={`Show map summary for ${profile.name}`}>Summary</button>
+        {adminMode && (
+          <>
+            <button className="edit-button" onClick={e => { e.stopPropagation(); onEdit(); }} aria-label={`Edit profile of ${profile.name}`}>Edit</button>
+            <button className="delete-button" onClick={e => { e.stopPropagation(); onDelete(); }} aria-label={`Delete profile of ${profile.name}`}>Delete</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ProfileDetails Component
+function ProfileDetails({profile}) {
+  return (
+    <article aria-label={`Details for profile ${profile.name}`}>
+      <h2>{profile.name}</h2>
+      <img src={profile.photo} alt={`Photo of ${profile.name}`} />
+      <p className="profile-detail-text"><strong>Description:</strong> {profile.description}</p>
+      <p className="profile-detail-text"><strong>Address:</strong> {profile.address}</p>
+      <p className="profile-detail-text"><strong>Interests:</strong> {profile.interests}</p>
+      <p className="profile-detail-text"><strong>Contact:</strong> <a href={"mailto:" + profile.contact}>{profile.contact}</a></p>
+    </article>
+  );
+}
+
+// MapView Component: Displays Google Map with marker on lat lng
+function MapView({lat, lng, address}) {
+  const mapRef = React.useRef(null);
+  const mapContainerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if(!window.google || !window.google.maps) return;
+    const center = new window.google.maps.LatLng(lat, lng);
+    const map = new window.google.maps.Map(mapContainerRef.current, {
+      zoom: 14,
+      center,
+    });
+    new window.google.maps.Marker({
+      position: center,
+      map,
+      title: address,
+    });
+    mapRef.current = map;
+  }, [lat, lng, address]);
+
+  return (
+    <div aria-label={`Map showing location for address: ${address}`} tabIndex="0" className="map-container" ref={mapContainerRef}>
+      {/* Map is rendered here */}
+    </div>
+  );
+}
+
+// AdminPanel Component
+function AdminPanel({profile, onSave, onCancel}) {
+  const [formData, setFormData] = React.useState(profile);
+
+  React.useEffect(() => {
+    setFormData(profile);
+  }, [profile]);
+
+  const onChange = (e) => {
+    const {name, value} = e.target;
+    setFormData(prev => ({...prev, [name]: value}));
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <section className="admin-panel" aria-label="Admin panel to add or edit profile">
+      <h3>{formData.id ? "Edit Profile" : "Add New Profile"}</h3>
+      <form className="admin-form" onSubmit={submit} noValidate>
+        <label htmlFor="nameInput">Name *</label>
+        <input id="nameInput" name="name" type="text" value={formData.name} onChange={onChange} required aria-required="true" />
+
+        <label htmlFor="photoInput">Photo URL</label>
+        <input id="photoInput" name="photo" type="text" value={formData.photo} onChange={onChange} placeholder="e.g. https://example.com/image.jpg" />
+
+        <label htmlFor="descriptionInput">Description</label>
+        <textarea id="descriptionInput" name="description" value={formData.description} onChange={onChange} rows="3" />
+
+        <label htmlFor="addressInput">Address *</label>
+        <input id="addressInput" name="address" type="text" value={formData.address} onChange={onChange} required aria-required="true" />
+
+        <label htmlFor="interestsInput">Interests</label>
+        <textarea id="interestsInput" name="interests" value={formData.interests} onChange={onChange} rows="2" />
+
+        <label htmlFor="contactInput">Contact Email</label>
+        <input id="contactInput" name="contact" type="text" value={formData.contact} onChange={onChange} placeholder="email@example.com" />
+
+        <div className="form-buttons">
+          <button type="submit" className="submit-btn">{formData.id ? "Save Changes" : "Add Profile"}</button>
+          <button type="button" onClick={onCancel} className="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+// Loading Spinner
+function LoadingSpinner() {
+  return <div role="status" aria-live="polite" className="loading-spinner" aria-label="Loading content"></div>;
+}
+
+// Render the app
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+</script>
+</body>
+</html>
+
